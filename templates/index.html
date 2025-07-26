@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="UTF-8">
+    <title>二维码批量生成器</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { 
+            font-family: "Noto Sans SC", Arial, sans-serif; 
+            background: #ffffff; 
+            color: #333333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container { 
+            width: 98vw; 
+            max-width: 1200px; 
+            margin: 40px auto; 
+            background: #ffffff; 
+            padding: 2vw; 
+            border-radius: 8px; 
+            border: 1px solid #ddd;
+        }
+        h1 { 
+            text-align: center; 
+            margin-bottom: 2vw; 
+            font-size: 2.2em; 
+            color: #333333;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 2vw;
+        }
+        .add-btn { 
+                padding: 0.8em 2em; 
+                background: #ffffff;
+                color: #333; 
+                border: 1px solid #ccc;
+                border-radius: 4px; 
+                font-size: 1em; 
+                font-weight: 600;
+                cursor: pointer;
+                text-decoration: none;
+                display: inline-block;
+            }
+            .add-btn:hover { 
+                background: #f5f5f5;
+            }
+        .table-wrap { 
+            overflow-x: auto; 
+        }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            min-width: 600px; 
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #ddd;
+        }
+        th, td { 
+            padding: 1em 0.5em; 
+            border-bottom: 1px solid #ccc; 
+            text-align: left; 
+            vertical-align: middle; 
+        }
+        th { 
+            background: #f5f5f5; 
+            font-size: 1.1em; 
+            white-space: nowrap; 
+            font-weight: 600;
+            color: #444;
+        }
+        td { 
+            font-size: 1em; 
+            word-break: break-word; 
+            color: #555;
+        }
+        .qr-thumb { 
+            width: 60px; 
+            height: 60px; 
+            object-fit: cover; 
+            border-radius: 4px; 
+            border: 1px solid #ddd; 
+            cursor: pointer; 
+        }
+        .qr-thumb:hover { 
+            background: #f5f5f5;
+        }
+        .modal { 
+            display: none; 
+            position: fixed; 
+            z-index: 999; 
+            left: 0; 
+            top: 0; 
+            width: 100vw; 
+            height: 100vh; 
+            background: rgba(0,0,0,0.5); 
+            align-items: center; 
+            justify-content: center; 
+        }
+        .modal-content { 
+            background: #ffffff; 
+            padding: 20px; 
+            border-radius: 8px; 
+            position: relative; 
+            border: 1px solid #ddd;
+        }
+        .modal-img { 
+            max-width: 80vw; 
+            max-height: 80vh; 
+            border-radius: 4px; 
+            border: 1px solid #ddd;
+        }
+        .close-btn { 
+            position: absolute; 
+            top: 8px; 
+            right: 12px; 
+            font-size: 28px; 
+            color: #333333; 
+            cursor: pointer; 
+            font-weight: bold;
+        }
+        @media (max-width: 700px) {
+            .container { 
+                padding: 2vw; 
+            }
+            th, td { 
+                padding: 0.6em 0.3em; 
+                font-size: 0.95em; 
+            }
+            .modal-img { 
+                max-width: 95vw; 
+                max-height: 60vh; 
+            }
+            .button-container {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+        a { 
+            color: #333; 
+            word-break: break-all; 
+            text-decoration: none;
+            font-weight: 500;
+        }
+        a:hover {
+            color: #666;
+            text-decoration: underline;
+        }
+        .delete-btn {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin: 0;
+            display: block;
+        }
+        .delete-btn:hover {
+            background: #cc0000;
+        }
+        td {
+            font-size: 1em;
+            word-break: break-word;
+            color: #555;
+            text-align: left;
+        }
+        .confirm-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .confirm-modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            width: 300px;
+            text-align: center;
+        }
+        .confirm-buttons {
+            margin-top: 20px;
+        }
+        .confirm-btn {
+            padding: 8px 16px;
+            margin: 0 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .confirm-yes {
+            background: #ff4444;
+            color: white;
+        }
+        .confirm-no {
+            background: #f0f0f0;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>二维码批量生成器</h1>
+        <div class="button-container">
+            <a href="{{ url_for('add') }}" class="add-btn">添加二维码</a>
+            <a href="{{ url_for('export_all') }}" class="add-btn">导出所有二维码</a>
+            <form action="{{ url_for('generate_all') }}" method="post" style="display: inline;">
+                <button type="submit" class="add-btn">一键生成所有二维码</button>
+            </form>
+        </div>
+        <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:10%;">标题</th>
+                    <th style="width:25%;">内容</th>
+                    <th style="width:35%;">链接</th>
+                    <th style="width:10%;">缩略图</th>
+                    <th style="width:10%;">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for id, title, content, url, img_url in qr_list %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('edit', qr_id=id) }}">{{ title }}</a>
+                    </td>
+                    <td>{{ content }}</td>
+                    <td><a href="{{ url }}" target="_blank">{{ url }}</a></td>
+                    <td>
+                        <img src="{{ url_for('qr_img', filename=img_url) }}" class="qr-thumb" alt="二维码" onclick="showModal(this.src, '{{ title }}')">
+                    </td>
+                    <td>
+                        <button class="delete-btn" onclick="confirmDelete({{ id }}, '{{ title }}')">删除</button>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </div>
+    <!-- 图片弹窗 -->
+    <div class="modal" id="imgModal" onclick="hideModal()">
+        <div class="modal-content" onclick="event.stopPropagation()" style="display: flex; flex-direction: column; align-items: center;">
+            <span class="close-btn" onclick="hideModal()">&times;</span>
+            <img id="modalImg" class="modal-img" src="" alt="二维码大图">
+            <a id="downloadBtn" href="#" download style="margin: 18px auto 0 auto; display: block; background: #ffffff; color: #333; padding: 12px 36px; border: 1px solid #ccc; border-radius: 4px; font-size: 1.1em; font-weight: 600; text-align: center; text-decoration: none;">下载图片</a>
+        </div>
+    </div>
+    <!-- 确认删除对话框 -->
+    <div id="confirmModal" class="confirm-modal">
+        <div class="confirm-modal-content">
+            <h3>确认删除</h3>
+            <p>您确定要删除二维码 "<span id="deleteTitle"></span>" 吗？</p>
+            <div class="confirm-buttons">
+                <button class="confirm-btn confirm-yes" onclick="performDelete()">是</button>
+                <button class="confirm-btn confirm-no" onclick="closeConfirmModal()">否</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let deleteId = null;
+        
+        function showModal(imgUrl, title) {
+            document.getElementById('modalImg').src = imgUrl;
+            document.getElementById('imgModal').style.display = 'flex';
+            var downloadBtn = document.getElementById('downloadBtn');
+            downloadBtn.href = imgUrl;
+            downloadBtn.download = title + ".png";
+        }
+        
+        function hideModal() {
+            document.getElementById('imgModal').style.display = 'none';
+        }
+        
+        function confirmDelete(id, title) {
+            deleteId = id;
+            document.getElementById('deleteTitle').textContent = title;
+            document.getElementById('confirmModal').style.display = 'block';
+        }
+        
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').style.display = 'none';
+            deleteId = null;
+        }
+        
+        function performDelete() {
+            if (deleteId !== null) {
+                // 创建一个表单并提交到删除路由
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/delete/${deleteId}`;
+                document.body.appendChild(form);
+                form.submit();
+            }
+            closeConfirmModal();
+        }
+        
+        // 修改所有缩略图的点击事件，传递标题
+        window.onload = function() {
+            var thumbs = document.querySelectorAll('.qr-thumb');
+            var rows = document.querySelectorAll('tbody tr');
+            thumbs.forEach(function(img, idx) {
+                var title = rows[idx].querySelector('a').textContent.trim();
+                img.onclick = function() {
+                    showModal(img.src, title);
+                };
+            });
+        };
+    </script>
+</body>
+</html>
